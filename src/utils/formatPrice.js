@@ -19,3 +19,15 @@ export function formatPrice(amount) {
 
   return nairaFormatter.format(value);
 }
+
+export function fromKobo(amount) {
+  const value = Number(amount);
+
+  if (!Number.isFinite(value)) return 0;
+
+  return value / 100;
+}
+
+export function formatKoboPrice(amount) {
+  return formatPrice(fromKobo(amount));
+}

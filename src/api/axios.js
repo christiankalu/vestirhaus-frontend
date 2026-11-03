@@ -18,6 +18,78 @@ const api = axios.create({
   },
 });
 
+function getCookie(name) {
+  if (typeof document === "undefined") return null;
+
+  const cookie = document.cookie
+    .split("; ")
+    .find((item) => item.startsWith(`${name}=`));
+
+  return cookie
+    ? decodeURIComponent(cookie.split("=").slice(1).join("="))
+    : null;
+}
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ??
+  "http://localhost:8000/api";
+
+let csrfRequest = null;
+
+async function ensureCsrfToken() {
+  let token = getCookie("csrftoken");
+
+  if (token) return token;
+
+  if (!csrfRequest) {
+    csrfRequest = axios
+      .get(`${API_BASE_URL.replace(/\/+$/, "")}/csrf/`, {
+        withCredentials: true,
+      })
+      .finally(() => {
+        csrfRequest = null;
+      });
+  }
+
+  const response = await csrfRequest;
+
+  // Prefer the cookie. The JSON token is a fallback.
+  token = getCookie("csrftoken") ?? response.data?.csrfToken;
+
+  if (!token) {
+    throw new Error(
+      "Unable to obtain a Django CSRF token. Check the CSRF cookie and CORS settings.",
+    );
+  }
+
+  return token;
+}
+
+
+api.interceptors.request.use(
+  async (config) => {
+    const method = (config.method ?? "get").toLowerCase();
+
+    const requiresCsrf = [
+      "post",
+      "put",
+      "patch",
+      "delete",
+    ].includes(method);
+
+    if (requiresCsrf) {
+      const csrfToken = await ensureCsrfToken();
+
+      config.headers = config.headers ?? {};
+      config.headers["X-CSRFToken"] = csrfToken;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+
 // Use a separate instance for refresh so the refresh request does not
 // recursively trigger the same response interceptor.
 const refreshClient = axios.create({

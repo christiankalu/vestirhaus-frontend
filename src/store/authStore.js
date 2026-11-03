@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 
 import api from "@/api/axios";
@@ -9,6 +8,7 @@ export const useAuthStore = create((set, get) => ({
   isAuthenticated: Boolean(tokenStorage.getAccessToken()),
   isLoading: false,
   initialized: false,
+  isInitialized: false,
 
   setUser(user) {
     set({
@@ -48,44 +48,38 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  async fetchCurrentUser() {
-    const accessToken = tokenStorage.getAccessToken();
-
-    if (!accessToken) {
-      set({
-        user: null,
-        isAuthenticated: false,
-        initialized: true,
-      });
-      return null;
-    }
+  fetchCurrentUser: async () => {
+    set({ isLoading: true });
 
     try {
-      const { data } = await api.get("/users/me/");
+      // Keep your existing API request and response mapping here.
+      // The Phase 6 endpoint was /users/me/.
+      const response = await api.get("/users/me/");
+
+      const user =
+        response.data?.user ??
+        response.data?.data ??
+        response.data;
 
       set({
-        user: data,
-        isAuthenticated: true,
-        initialized: true,
+        user,
+        isInitialized: true,
       });
 
-      return data;
+      return user;
     } catch (error) {
-      if (error.response?.status === 401) {
-        tokenStorage.clear();
+      // Keep your existing token cleanup here if you have it.
+      set({
+        user: null,
+        isInitialized: true,
+      });
 
-        set({
-          user: null,
-          isAuthenticated: false,
-          initialized: true,
-        });
-
-        return null;
-      }
-
-      // Preserve an existing session on network/server errors.
-      set({ initialized: true });
-      throw error;
+      return null;
+    } finally {
+      set({
+        isLoading: false,
+        isInitialized: true,
+      });
     }
   },
 
