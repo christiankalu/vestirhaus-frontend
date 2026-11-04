@@ -8,6 +8,9 @@ import "./index.css";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 
+import { HelmetProvider } from "react-helmet-async";
+import { Toaster } from "react-hot-toast";
+
 async function initializeApplication() {
   const auth = useAuthStore.getState();
 
@@ -32,7 +35,10 @@ async function initializeApplication() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <HelmetProvider>
+      <App />
+      <Toaster position="top-right" />
+    </HelmetProvider>
   </React.StrictMode>,
 );
 

@@ -34,6 +34,19 @@ import AboutPage from "@/pages/AboutPage";
 import BlogPage from "@/pages/BlogPage";
 import BlogPostPage from "@/pages/BlogPostPage";
 
+// Admin Routes Imports
+import AdminRoute from "@/components/admin/AdminRoute";
+import AdminLayout from "@/components/admin/AdminLayout";
+
+import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
+import AdminProductsPage from "@/pages/admin/AdminProductsPage";
+import AdminProductFormPage from "@/pages/admin/AdminProductFormPage";
+import AdminOrdersPage from "@/pages/admin/AdminOrdersPage";
+import AdminOrderDetailPage from "@/pages/admin/AdminOrderDetailPage";
+import AdminCustomersPage from "@/pages/admin/AdminCustomersPage";
+import AdminCouponsPage from "@/pages/admin/AdminCouponsPage";
+
+
 const placeholder = (title, description) => (
   <PagePlaceholder title={title} description={description} />
 );
@@ -192,6 +205,51 @@ export const router = createBrowserRouter([
 
       { path: "/unauthorized", element: <UnauthorizedPage /> },
       { path: "*", element: <NotFoundPage /> },
+    ],
+  },
+
+  // Admin Routes
+  {
+    element: <AdminRoute />,
+    children: [
+      {
+        path: "/admin-panel",
+        element: <AdminLayout />,
+        children: [
+          {
+            index: true,
+            element: <AdminDashboardPage />,
+          },
+          {
+            path: "products",
+            element: <AdminProductsPage />,
+          },
+          {
+            path: "products/new",
+            element: <AdminProductFormPage />,
+          },
+          {
+            path: "products/:productId/edit",
+            element: <AdminProductFormPage />,
+          },
+          {
+            path: "orders",
+            element: <AdminOrdersPage />,
+          },
+          {
+            path: "orders/:orderId",
+            element: <AdminOrderDetailPage />,
+          },
+          {
+            path: "customers",
+            element: <AdminCustomersPage />,
+          },
+          {
+            path: "coupons",
+            element: <AdminCouponsPage />,
+          },
+        ],
+      },
     ],
   },
 ]);

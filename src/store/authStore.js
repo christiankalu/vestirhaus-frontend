@@ -7,7 +7,6 @@ export const useAuthStore = create((set, get) => ({
   user: null,
   isAuthenticated: Boolean(tokenStorage.getAccessToken()),
   isLoading: false,
-  initialized: false,
   isInitialized: false,
 
   setUser(user) {
@@ -39,7 +38,7 @@ export const useAuthStore = create((set, get) => ({
       set({
         user,
         isAuthenticated: true,
-        initialized: true,
+        isInitialized: true,
       });
 
       return user;
@@ -52,30 +51,35 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoading: true });
 
     try {
-      // Keep your existing API request and response mapping here.
-      // The Phase 6 endpoint was /users/me/.
       const response = await api.get("/users/me/");
 
-      const user =
+      const payload =
         response.data?.user ??
         response.data?.data ??
         response.data;
 
+      const currentUser = payload?.user ?? payload;
+
       set({
-        user,
-        isInitialized: true,
+        user: currentUser,
       });
 
-      return user;
+      return currentUser;
     } catch (error) {
-      // Keep your existing token cleanup here if you have it.
-      set({
-        user: null,
-        isInitialized: true,
-      });
+      if (error.response?.status === 401) {
+        // Keep your existing token cleanup logic here.
+        // For example: clearTokens();
+        set({ user: null });
+      }
+
+      console.error(
+        "Vestirhaus session check failed:",
+        error.response?.data ?? error.message,
+      );
 
       return null;
     } finally {
+      // This is essential: the route guard must not wait forever.
       set({
         isLoading: false,
         isInitialized: true,
@@ -96,7 +100,7 @@ export const useAuthStore = create((set, get) => ({
       set({
         user: null,
         isAuthenticated: false,
-        initialized: true,
+        isInitialized: true,
       });
     }
   },
@@ -107,7 +111,7 @@ export const useAuthStore = create((set, get) => ({
     set({
       user: null,
       isAuthenticated: false,
-      initialized: true,
+      isInitialized: true,
     });
   },
 }));

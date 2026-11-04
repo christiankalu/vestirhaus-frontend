@@ -13,13 +13,20 @@ import FormField from "@/components/auth/FormField";
 import { loginSchema } from "@/utils/authSchemas";
 import { useAuthStore } from "@/store/authStore";
 
-function getSafeReturnDestination(destination) {
-  if (!destination?.pathname) return "/account";
+function getSafeReturnDestination(destination, user) {
+  // Administrators should land in the admin panel by default.
+  if (!destination?.pathname) {
+    return user?.is_staff === true
+      ? "/admin-panel"
+      : "/account";
+  }
 
   const path = destination.pathname;
 
   if (!path.startsWith("/") || path.startsWith("//")) {
-    return "/account";
+    return user?.is_staff === true
+      ? "/admin-panel"
+      : "/account";
   }
 
   return `${path}${destination.search ?? ""}${destination.hash ?? ""}`;
@@ -47,14 +54,21 @@ export default function LoginPage() {
     },
   });
 
+  const fetchCurrentUser = useAuthStore(
+    (state) => state.fetchCurrentUser,
+  );
+
   async function onSubmit(data) {
     setServerError("");
 
     try {
       await login(data);
 
+      const authenticatedUser = await fetchCurrentUser();
+
       const destination = getSafeReturnDestination(
         location.state?.from,
+        authenticatedUser
       );
 
       navigate(destination, { replace: true });
